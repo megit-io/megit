@@ -1,19 +1,18 @@
-/*
- TODO: What is the conventional way to add comments to things in Rust
-*/
 use git2::{Error, ErrorClass, ErrorCode, Repository, Commit, BranchType};
 use std::path::Path;
 
+/// Represents a Git repository.
 pub struct Repo {
     inner: Repository,
 }
 
+/// Information about a Git branch.
 struct BranchInfo {
     name: String,
 }
 
 impl Repo {
-
+    /// Iterates over all local branches in the repository and returns information about each branch.
     fn iter_branches(&self) -> Result<Vec<BranchInfo>, Error> {
         let mut branches = Vec::new();
         let repo = &self.inner;
@@ -28,6 +27,7 @@ impl Repo {
         Ok(branches)
     }
 
+    /// Iterates over all commits in the repository.
     fn iter_commits(&self) -> Result<Vec<Commit>, Error> {
         let repo = &self.inner;
         let mut revwalk = repo.revwalk()?;
@@ -44,34 +44,35 @@ impl Repo {
     }
 }
 
+/// Checks if a directory contains a Git repository.
 fn is_git_repository_dir(path: &Path) -> bool {
     let git_directory = path.join(".git");
     path.is_dir() && git_directory.is_dir()
 }
 
+/// Creates a `Repo` object if the given path is a valid Git repository.
 fn repo_if_valid_path(path: &str) -> Result<Repo, Error> {
-    let path_str = path.clone();
+    let path_str = path.to_owned();
     let path = Path::new(path);
     if is_git_repository_dir(path) {
         let repository = Repository::open(path)?;
         return Ok(Repo { inner: repository });
     }
-    Err(Error::new(ErrorCode::NotFound, ErrorClass::Invalid, format!("The path {path_str} is not a valid Git repository")))
+    Err(Error::new(ErrorCode::NotFound, ErrorClass::Invalid, format!("The path '{}' is not a valid Git repository", path_str)))
 }
-
 
 /* ----------------------------------------------------------------
         TESTS!
    ----------------------------------------------------------------*/
 
+#[cfg(test)]
 mod tests {
     use std::path::Path;
-    use crate::repo::{is_git_repository_dir, repo_if_valid_path};
+    use super::{is_git_repository_dir, repo_if_valid_path};
 
     #[test]
     fn test_git_repo_detection() {
-        /* Note: this is making the assumption that we are running `cargo test` from the root
-           of the megit repository, so these paths are not relative to this repo.rs file */
+        // Note: These paths assume running `cargo test` from the root of the Git repository
         assert!(is_git_repository_dir(Path::new(".")));
         assert!(!is_git_repository_dir(Path::new("./src")));
     }
