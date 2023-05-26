@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::path::Path;
 use git2::{Error,Commit,Repository, Branch};
+use megit::repo::Repo;
 
 /// MeGit
 #[derive(Parser, Debug)]

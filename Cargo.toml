@@ -1,5 +1,5 @@
 [package]
-name = "megit_cli"
+name = "megit"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.65"
@@ -9,8 +9,8 @@ readme = 'README.md'
 
 [dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
-plotters = "0.3.4"
 git2 = { version = "0.17.1", features = ["vendored-libgit2"] }
+plotters = "0.3.4"
 
 
 [profile.release]
