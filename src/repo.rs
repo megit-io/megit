@@ -1,13 +1,48 @@
 /*
  TODO: What is the conventional way to add comments to things in Rust
 */
-use git2::{Error, ErrorClass, ErrorCode, Repository};
+use git2::{Error, ErrorClass, ErrorCode, Repository, Commit, BranchType};
 use std::path::Path;
 
 pub struct Repo {
     inner: Repository,
 }
 
+struct BranchInfo {
+    name: String,
+}
+
+impl Repo {
+
+    fn iter_branches(&self) -> Result<Vec<BranchInfo>, Error> {
+        let mut branches = Vec::new();
+        let repo = &self.inner;
+
+        for branch in repo.branches(Some(BranchType::Local))? {
+            let (branch, _) = branch?;
+            if let Some(branch_name) = branch.name()?.map(|name| name.to_string()) {
+                branches.push(BranchInfo { name: branch_name });
+            }
+        }
+
+        Ok(branches)
+    }
+
+    fn iter_commits(&self) -> Result<Vec<Commit>, Error> {
+        let repo = &self.inner;
+        let mut revwalk = repo.revwalk()?;
+        revwalk.push_head()?;
+
+        let mut commits = Vec::new();
+        for oid in revwalk {
+            let oid = oid?;
+            let commit = repo.find_commit(oid)?;
+            commits.push(commit);
+        }
+
+        Ok(commits)
+    }
+}
 
 fn is_git_repository_dir(path: &Path) -> bool {
     let git_directory = path.join(".git");
@@ -45,5 +80,16 @@ mod tests {
     fn test_get_repo() {
         // Just try making a repository object
         assert!(repo_if_valid_path(".").is_ok());
+    }
+
+    #[test]
+    fn test_get_branches_and_get_commits() {
+        let repo = repo_if_valid_path(".").unwrap();
+        for branch in repo.iter_branches().unwrap() {
+            assert!(!branch.name.is_empty());
+        }
+        for commit in repo.iter_commits().unwrap() {
+            assert!(!commit.author().name().is_none())
+        }
     }
 }
