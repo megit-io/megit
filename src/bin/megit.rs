@@ -132,4 +132,3 @@ fn do_shit() -> Result<(), Error> {
 fn main(){
     do_shit().expect("OR ELSE");
 }
-
