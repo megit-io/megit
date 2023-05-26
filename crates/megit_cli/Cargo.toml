@@ -9,8 +9,7 @@ license = { workspace = true }
 
 [dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
-megit_plot = { path = "../megit_plot" }
-megit_git = { path = "../megit_git" }
+plotters = "0.3.4"
 git2 = { version = "0.17.1", features = ["vendored-libgit2"] }
 
 

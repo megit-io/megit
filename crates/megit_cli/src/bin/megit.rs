@@ -11,8 +11,8 @@ struct Args {
     path: String,
 }
 
-fn list_branches(repo: &Repository) -> Vec<Branch> {
-    
+fn list_branches(_repo: &Repository) -> Option<Vec<Branch>> {
+    None
 }
 //
 // fn run(args: &Args) -> Result<(), git2::Error> {
@@ -121,6 +121,8 @@ fn do_shit() -> Result<(), Error> {
         //     Err(E) => println!("ARAR")
         // }
     }
+
+    list_branches(&repo);
 
     Ok(())
 
