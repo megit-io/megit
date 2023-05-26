@@ -1,0 +1,22 @@
+fail_fast: true
+repos:
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+      - id: mdformat
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.14.11
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      # tidy up extra whitespace at end of files
+      - id: trailing-whitespace
+      # ensure consistent newline endings for files (\n only)
+      - id: end-of-file-fixer
+      # fix newlines in general to prevent pesky windows users writing CRLF
+      - id: mixed-line-ending
+        args: [--fix=lf]
