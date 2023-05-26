@@ -7,13 +7,13 @@ pub struct Repo {
 }
 
 /// Information about a Git branch.
-struct BranchInfo {
-    name: String,
+pub struct BranchInfo {
+    pub name: String,
 }
 
 impl Repo {
     /// Iterates over all local branches in the repository and returns information about each branch.
-    fn iter_branches(&self) -> Result<Vec<BranchInfo>, Error> {
+    pub fn iter_branches(&self) -> Result<Vec<BranchInfo>, Error> {
         let mut branches = Vec::new();
         let repo = &self.inner;
 
@@ -28,7 +28,7 @@ impl Repo {
     }
 
     /// Iterates over all commits in the repository.
-    fn iter_commits(&self) -> Result<Vec<Commit>, Error> {
+    pub fn iter_commits(&self) -> Result<Vec<Commit>, Error> {
         let repo = &self.inner;
         let mut revwalk = repo.revwalk()?;
         revwalk.push_head()?;
@@ -51,7 +51,7 @@ fn is_git_repository_dir(path: &Path) -> bool {
 }
 
 /// Creates a `Repo` object if the given path is a valid Git repository.
-fn repo_if_valid_path(path: &str) -> Result<Repo, Error> {
+pub fn repo_if_valid_path(path: &str) -> Result<Repo, Error> {
     let path_str = path.to_owned();
     let path = Path::new(path);
     if is_git_repository_dir(path) {
