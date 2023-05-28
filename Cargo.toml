@@ -8,6 +8,7 @@ readme = 'README.md'
 
 
 [dependencies]
+chrono = "0.4.24"
 clap = { version = "4.3.0", features = ["derive"] }
 git2 = { version = "0.17.1", features = ["vendored-libgit2"] }
 plotters = "0.3.4"

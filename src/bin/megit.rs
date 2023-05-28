@@ -15,15 +15,17 @@ struct Args {
     username: String
 }
 
+// TODO: get username/author name from existing .gitconfig
+
 fn main() {
     let args = Args::parse();
-    println!("{}", args.username);
+    // println!("{}", args.username);
 
     let repo = repo_if_valid_path(&args.path).unwrap();
-    for branch in repo.iter_branches().unwrap() {
+    for branch in repo.list_branches().unwrap() {
         println!("{}", branch.name)
     }
-    for commit in repo.iter_commits().unwrap() {
-        println!("{}", commit.id())
-    }
+    // for commit in repo.iter_commits().unwrap() {
+    //     println!("{}", commit.id())
+    // }
 }
