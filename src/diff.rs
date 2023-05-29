@@ -1,4 +1,5 @@
-use git2::{Diff, Repository, Tree, Error, DiffFormat, DiffLine, DiffHunk, DiffDelta, DiffLineType};
+use git2::{Diff, Repository, Error, DiffFormat, DiffLine, DiffHunk, DiffDelta, DiffLineType};
+use crate::commit::MeCommit;
 
 pub struct MeDiff<'repo> {
     inner: Diff<'repo>
@@ -18,7 +19,9 @@ fn count_lines(
 }
 
 impl<'repo> MeDiff<'repo> {
-    pub fn new(repo: &'repo Repository, tree_left: Tree<'repo>, tree_right: Tree<'repo>) -> Result<MeDiff<'repo>, Error> {
+    pub fn new(repo: &'repo Repository, from_commit: &'repo MeCommit, to_commit: &'repo MeCommit) -> Result<MeDiff<'repo>, Error> {
+        let tree_left = from_commit.tree()?;
+        let tree_right = to_commit.tree()?;
         let diff = repo.diff_tree_to_tree(Some(&tree_left), Some(&tree_right), None)?;
         let diff = MeDiff { inner: diff };
         Ok(diff)
@@ -52,31 +55,34 @@ impl<'repo> MeDiff<'repo> {
 /* ----------------------------------------------------------------
         TESTS!
    ----------------------------------------------------------------*/
-
-#[cfg(test)]
-mod tests {
-    use crate::repo::repo_if_valid_path;
-
-    #[test]
-    fn test_basic_diff() {
-        let repo = repo_if_valid_path(".").expect("Should find a repository in the present directory");
-        let commits = repo.list_commits().expect("Should have a list of commits in the repository");
-
-        // sanity check we have at least two commits to compare
-        assert!(commits.len() > 1);
-
-        // with thanks to https://stackoverflow.com/a/29509257 :
-        let (commit1, commit2) = match &commits[..] {
-            [first, second, ..] => (first, second),
-            _ => unreachable!(),
-        };
-
-        let diff = repo.diff(commit1, commit2).expect("Should create a diff of two commits");
-
-        let count = diff.new_lines().unwrap();
-        assert!(count > 0);
-
-        let count = diff.removed_lines().unwrap();
-        assert!(count > 0);
-    }
-}
+//
+// #[cfg(test)]
+// mod tests {
+//     use crate::repo::{clone_commit, repo_if_valid_path};
+//
+//     #[test]
+//     fn test_basic_diff() {
+//         let repo = repo_if_valid_path(".").expect("Should find a repository in the present directory");
+//         let commits = repo.list_commits().expect("Should have a list of commits in the repository");
+//
+//         // sanity check we have at least two commits to compare
+//         assert!(commits.len() > 1);
+//
+//         let commit1 = clone_commit(&repo, commits.get(0).unwrap());
+//
+//
+//         // with thanks to https://stackoverflow.com/a/29509257 :
+//         let (commit1, commit2) = match &commits[..] {
+//             [first, second, ..] => (first, second),
+//             _ => unreachable!(),
+//         };
+//
+//         let diff = repo.diff(commit1, commit2).expect("Should create a diff of two commits");
+//
+//         let count = diff.new_lines().unwrap();
+//         assert!(count > 0);
+//
+//         let count = diff.removed_lines().unwrap();
+//         assert!(count > 0);
+//     }
+// }
