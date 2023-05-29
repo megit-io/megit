@@ -1,7 +1,8 @@
-use git2::{BranchType, Commit, Error, ErrorClass, ErrorCode, Repository, Sort};
+use git2::{BranchType, Error, ErrorClass, ErrorCode, Repository, Sort};
 use std::path::Path;
 use crate::branch::MeBranch;
-use crate::commit::{from_commit, MeCommit};
+use crate::commit::MeCommit;
+use crate::diff::MeDiff;
 
 /// Represents a Git repository.
 pub struct MeRepo {
@@ -9,7 +10,7 @@ pub struct MeRepo {
 }
 
 impl MeRepo {
-    /// Iterates over all local branches in the repository and returns information about each branch.
+    /// Iterates over all local branches in the repository and returns a wrapper for each branch.
     pub fn list_branches(&self) -> Result<Vec<MeBranch>, Error> {
         let mut branches = Vec::new();
         let repo = &self.inner;
@@ -36,10 +37,17 @@ impl MeRepo {
         for oid in revwalk {
             let oid = oid?;
             let commit = repo.find_commit(oid)?;
-            commits.push(from_commit(commit));
+            commits.push(MeCommit::new(commit));
         }
 
         Ok(commits)
+    }
+
+    pub fn diff<'repo>(&'repo self, from_commit: &'repo MeCommit, to_commit: &'repo MeCommit) -> Result<MeDiff<'repo>, Error> {
+        let tree_left = from_commit.tree()?;
+        let tree_right = to_commit.tree()?;
+        let diff = MeDiff::new(&self.inner, tree_left, tree_right)?;
+        Ok(diff)
     }
 }
 
@@ -51,13 +59,16 @@ fn is_git_repository_dir(path: &Path) -> bool {
 
 /// Creates a `Repo` object if the given path is a valid Git repository.
 pub fn repo_if_valid_path(path: &str) -> Result<MeRepo, Error> {
-    let path_str = path.clone();
+    let no_repo = Error::new(ErrorCode::NotFound, ErrorClass::Invalid,
+                             format!("The path '{}' is not a valid Git repository", &path));
+
     let path = Path::new(path);
-    if is_git_repository_dir(path) {
-        let repository = Repository::open(path)?;
-        return Ok(MeRepo { inner: repository });
+    if !is_git_repository_dir(path) {
+        return Err(no_repo)
     }
-    Err(Error::new(ErrorCode::NotFound, ErrorClass::Invalid, format!("The path '{}' is not a valid Git repository", path_str)))
+
+    let repository = Repository::open(path)?;
+    return Ok(MeRepo { inner: repository });
 }
 
 /* ----------------------------------------------------------------
@@ -88,9 +99,9 @@ mod tests {
         for branch in repo.list_branches().unwrap() {
             assert!(!branch.name.is_empty());
         }
-        // for commit in repo.iter_commits().unwrap() {
-        //     assert!(!commit.get_author().name().is_none())
-        // }
+        for commit in repo.list_commits().unwrap() {
+            assert!(!commit.get_author().unwrap().is_empty())
+        }
     }
 
     #[test]

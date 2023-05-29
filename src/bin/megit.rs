@@ -18,6 +18,7 @@ struct Args {
 // TODO: get username/author name from existing .gitconfig
 
 fn main() {
+    // TODO: NO_COLOR https://no-color.org/
     let args = Args::parse();
     // println!("{}", args.username);
 
