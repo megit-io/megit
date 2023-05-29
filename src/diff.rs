@@ -1,4 +1,4 @@
-use git2::{Diff, Repository, Tree, Error, DiffLineType, DiffFormat, DiffLine, DiffHunk, DiffDelta};
+use git2::{Diff, Repository, Tree, Error, DiffFormat, DiffLine, DiffHunk, DiffDelta, DiffLineType};
 
 pub struct MeDiff<'repo> {
     inner: Diff<'repo>
@@ -24,7 +24,15 @@ impl<'repo> MeDiff<'repo> {
         Ok(diff)
     }
 
-    pub fn count_lines(&self, line_type: DiffLineType) -> Result<usize,Error> {
+    pub fn new_lines(&self) -> Result<usize, Error> {
+        self.count_lines(DiffLineType::Addition)
+    }
+
+    pub fn removed_lines(&self) -> Result<usize, Error> {
+        self.count_lines(DiffLineType::Deletion)
+    }
+
+    fn count_lines(&self, line_type: DiffLineType) -> Result<usize,Error> {
         // need a u32 to be able to accumulate ; dont want to faff converting to a usize after
         let format = DiffFormat::Patch;
         let mut counter: usize = 0;
@@ -47,7 +55,6 @@ impl<'repo> MeDiff<'repo> {
 
 #[cfg(test)]
 mod tests {
-    use git2::DiffLineType;
     use crate::repo::repo_if_valid_path;
 
     #[test]
@@ -66,10 +73,10 @@ mod tests {
 
         let diff = repo.diff(commit1, commit2).expect("Should create a diff of two commits");
 
-        let count = diff.count_lines(DiffLineType::Addition).unwrap();
+        let count = diff.new_lines().unwrap();
         assert!(count > 0);
 
-        let count = diff.count_lines(DiffLineType::Deletion).unwrap();
+        let count = diff.removed_lines().unwrap();
         assert!(count > 0);
     }
 }

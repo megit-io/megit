@@ -4,11 +4,14 @@ use chrono::{DateTime, Local, TimeZone};
 
 pub struct MeCommit<'repo> {
     inner: Commit<'repo>,
+    pub sha: String
 }
 
 impl<'repo> MeCommit<'repo> {
     pub fn new(commit: Commit) -> MeCommit {
+        let sha = commit.id().to_string();
         MeCommit {
+            sha,
             inner: commit
         }
     }
