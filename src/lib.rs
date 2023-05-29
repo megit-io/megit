@@ -1,4 +1,5 @@
-pub mod repo;
 mod branch;
-mod commit;
+pub mod commit;
 mod diff;
+pub mod repo;
+mod stats;

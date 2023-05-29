@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::branch::MeBranch;
 use crate::commit::MeCommit;
 use crate::diff::MeDiff;
+use std::borrow::Borrow;
 
 /// Represents a Git repository.
 pub struct MeRepo {
@@ -26,6 +27,7 @@ impl MeRepo {
     }
 
     /// Iterates over all commits in the repository.
+    /// TODO: this actually only lists commits in the current branch
     pub fn list_commits(&self) -> Result<Vec<MeCommit>, Error> {
         let repo = &self.inner;
         let mut revwalk = repo.revwalk()?;
@@ -43,24 +45,53 @@ impl MeRepo {
         Ok(commits)
     }
 
-    pub fn diff<'repo>(&'repo self, from_commit: &'repo MeCommit, to_commit: &'repo MeCommit) -> Result<MeDiff<'repo>, Error> {
-        let tree_left = from_commit.tree()?;
-        let tree_right = to_commit.tree()?;
-        let diff = MeDiff::new(&self.inner, tree_left, tree_right)?;
+    pub fn diffs_for_user(&self, name_or_email: String) -> Result<Vec<MeDiff>, Error> {
+        let repo = &self.inner;
+        let commits = self.list_commits()?;
+
+        if commits.len() == 0 {
+            return Err(Error::new(ErrorCode::NotFound, ErrorClass::None,
+                                  format!("No commits with author or committer {}", name_or_email)))
+        }
+
+        if commits.len() == 1 {
+            return Err(Error::new(ErrorCode::NotFound, ErrorClass::None,
+                                  format!("Only one commit found for {}", name_or_email)))
+        }
+
+        let diff_iter = commits
+            .windows(2) // Use a window size of 2
+            .map(|window| match window {
+                [prev, curr] => {
+                    let from_commit = clone_commit(repo, prev)?.borrow();
+                    let to_commit = clone_commit(repo, curr)?.borrow();
+                    self.diff(from_commit, to_commit)
+                },
+                _ => unreachable!(),
+            });
+
+        let mut diffs = Vec::new();
+        for diff in diff_iter {
+            if diff.is_ok() {
+                diffs.push(diff.unwrap());
+            } else {
+                return Err(diff.err().unwrap());
+            }
+        }
+
+        Ok(diffs)
+    }
+
+    pub fn diff<'repo>(&'repo self, from_commit: &'repo MeCommit,  to_commit: &'repo MeCommit) -> Result<MeDiff<'repo>, Error> {
+        let diff = MeDiff::new(&self.inner, from_commit, to_commit)?;
         Ok(diff)
     }
 
     pub fn author_email(&self) -> Result<String, Error> {
         let conf = self.inner.config()?;
-
-        let result = match conf.get_entry("user.email") {
-            Ok(entry) => {
-                let email = entry.value().unwrap();
-                Ok(email.to_string())
-            }
-            Err(err) => Err(err)
-        };
-        result
+        let entry = conf.get_entry("user.email")?;
+        let email = entry.value().unwrap();
+        Ok(email.to_string())
     }
 }
 
@@ -85,6 +116,12 @@ pub fn repo_if_valid_path(path: &str) -> Result<MeRepo, Error> {
     return Ok(MeRepo { inner: repository });
 }
 
+pub fn clone_commit<'repo>(repo: &'repo Repository, commit: &'repo MeCommit<'repo>) -> Result<MeCommit<'repo>, Error> {
+    let commit = repo.find_commit(commit.oid())?;
+    let commit = MeCommit::new(commit);
+    Ok(commit)
+}
+
 /* ----------------------------------------------------------------
         TESTS!
    ----------------------------------------------------------------*/
@@ -93,6 +130,14 @@ pub fn repo_if_valid_path(path: &str) -> Result<MeRepo, Error> {
 mod tests {
     use std::path::Path;
     use super::{is_git_repository_dir, repo_if_valid_path};
+
+    #[test]
+    fn test_diffs_for_user() {
+        let repo = repo_if_valid_path(".").unwrap();
+        let email = repo.author_email().unwrap();
+        let diffs = repo.diffs_for_user(email).unwrap();
+        assert!(diffs.len() > 0);
+    }
 
     #[test]
     fn test_email_from_config() {
@@ -133,10 +178,17 @@ mod tests {
         for (prev_commit, curr_commit) in commits.iter().zip(commits.iter().skip(1)) {
             let prev_datetime = prev_commit.datetime();
             let curr_datetime = curr_commit.datetime();
-            println!("{} : {}", prev_datetime, curr_datetime);
 
             // Assert that the current commit is more recent than the previous commit
             assert!(curr_datetime > prev_datetime);
         }
     }
+
+    // #[test]
+    // fn test_line_count() {
+    //     let repo = repo_if_valid_path(".").unwrap();
+    //     let commits = repo.list_commits().unwrap();
+    //     let (new_lines, removed_lines) = repo.stats();
+    //     assert!(new_lines>removed_lines);
+    // }
 }
