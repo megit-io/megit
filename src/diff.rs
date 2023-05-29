@@ -1,19 +1,16 @@
-use std::any::Any;
-use git2::{Diff, DiffOptions, Repository, Tree, Error, DiffLineType, DiffFormat, DiffLine, DiffHunk, DiffDelta};
+use git2::{Diff, Repository, Tree, Error, DiffLineType, DiffFormat, DiffLine, DiffHunk, DiffDelta};
 
 pub struct MeDiff<'repo> {
-    inner: Diff<'repo>,
-    tree_left: Tree<'repo>,
-    tree_right: Tree<'repo>,
+    inner: Diff<'repo>
 }
 
 
-fn count_line(
+fn count_lines(
     _delta: DiffDelta,
     _hunk: Option<DiffHunk>,
     line: DiffLine,
     line_type: DiffLineType,
-    mut counter: &mut usize) -> bool {
+    counter: &mut usize) -> bool {
     if line_type == line.origin_value() {
         *counter += 1;
     }
@@ -22,12 +19,8 @@ fn count_line(
 
 impl<'repo> MeDiff<'repo> {
     pub fn new(repo: &'repo Repository, tree_left: Tree<'repo>, tree_right: Tree<'repo>) -> Result<MeDiff<'repo>, Error> {
-        let mut opts = DiffOptions::new();
-
-        let diff = repo.diff_tree_to_tree(Some(&tree_left), Some(&tree_right),
-                                          Some(&mut opts))?;
-
-        let diff = MeDiff { tree_left, tree_right, inner: diff };
+        let diff = repo.diff_tree_to_tree(Some(&tree_left), Some(&tree_right), None)?;
+        let diff = MeDiff { inner: diff };
         Ok(diff)
     }
 
@@ -35,8 +28,11 @@ impl<'repo> MeDiff<'repo> {
         // need a u32 to be able to accumulate ; dont want to faff converting to a usize after
         let format = DiffFormat::Patch;
         let mut counter: usize = 0;
+
+        // bit hacky to abuse the print callback this way but didn't see an easier
+        // option to iterate over all diffs and all lines...
         self.inner.print(format, |d, h, l|
-            count_line(d, h, l, line_type, &mut counter))?;
+            count_lines(d, h, l, line_type, &mut counter))?;
 
         // make it immutable now
         let count = counter;

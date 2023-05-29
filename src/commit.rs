@@ -3,24 +3,31 @@ use chrono::{DateTime, Local, TimeZone};
 
 
 pub struct MeCommit<'repo> {
-    sha: String,
+    // sha: String,
     inner: Commit<'repo>
 }
 
 impl<'repo> MeCommit<'repo> {
 
     pub fn new(commit: Commit) -> MeCommit {
-        let sha = &commit.id().to_string();
-        let sha = sha.clone();
+        // let sha = &commit.id().to_string();
+        // let sha = sha.clone();
+            // sha,
 
         MeCommit {
-            sha,
             inner: commit
         }
     }
 
-    pub fn get_author(&self) -> Result<String, Error> {
-        let author = self.inner.author().name().unwrap().to_string();
+    pub fn get_author_email(&self) -> Result<String, Error> {
+        let author = self.inner.author();
+        let author = author.email().unwrap().to_string();
+        Ok(author)
+    }
+
+    pub fn get_author_name(&self) -> Result<String, Error> {
+        let author = self.inner.author();
+        let author = author.name().unwrap().to_string();
         Ok(author)
     }
 
@@ -34,43 +41,3 @@ impl<'repo> MeCommit<'repo> {
         return self.inner.tree()
     }
 }
-
-// pub struct MeDiff<'repo> {
-//     inner: Diff<'repo>
-// }
-//
-// impl<'repo> MeDiff<'repo> {
-//
-//     fn count_lines_by_type(&self, line_type: DiffLineType) -> usize {
-//         let mut matching_lines: usize = 0;
-//
-//         // let mut opts = DiffOptions::new();
-//
-//
-//         for delta in self.inner.deltas() {
-//             for hunk in delta.new_hunks() {
-//                 for line in hunk.lines() {
-//                     if line.origin() == line_type {
-//                         matching_lines += 1;
-//                     }
-//                 }
-//             }
-//         }
-//
-//         // self.inner.foreach(&mut |delta: DiffDelta, _progress: f64| {
-//         //     let hunk = delta.new_hunk();
-//         //     let lines = hunk.lines();
-//         //
-//         //     for line in lines {
-//         //         if line.origin() == line_type {
-//         //             matching_lines += 1;
-//         //         }
-//         //     }
-//         //
-//         //     true
-//         // }, None, None, None)
-//         //     .unwrap();
-//
-//         matching_lines
-//     }
-// }

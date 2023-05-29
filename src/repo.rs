@@ -36,8 +36,8 @@ impl MeRepo {
         let mut commits = Vec::new();
         for oid in revwalk {
             let oid = oid?;
-            let commit = repo.find_commit(oid)?;
-            commits.push(MeCommit::new(commit));
+            let commit = MeCommit::new(repo.find_commit(oid)?);
+            commits.push(commit);
         }
 
         Ok(commits)
@@ -49,7 +49,21 @@ impl MeRepo {
         let diff = MeDiff::new(&self.inner, tree_left, tree_right)?;
         Ok(diff)
     }
+
+    pub fn author_email(&self) -> Result<String, Error> {
+        let conf = self.inner.config()?;
+
+        let result = match conf.get_entry("user.email") {
+            Ok(entry) => {
+                let email= entry.value().unwrap();
+                Ok(email.to_string())
+            }
+            Err(err) => Err(err)
+        };
+        result
+    }
 }
+
 
 /// Checks if a directory contains a Git repository.
 fn is_git_repository_dir(path: &Path) -> bool {
@@ -81,6 +95,13 @@ mod tests {
     use super::{is_git_repository_dir, repo_if_valid_path};
 
     #[test]
+    fn test_email_from_config() {
+        let repo = repo_if_valid_path(".").unwrap();
+        let email = repo.author_email().unwrap();
+        assert!(!email.is_empty());
+    }
+
+    #[test]
     fn test_git_repo_detection() {
         // Note: These paths assume running `cargo test` from the root of the Git repository
         assert!(is_git_repository_dir(Path::new(".")));
@@ -100,7 +121,7 @@ mod tests {
             assert!(!branch.name.is_empty());
         }
         for commit in repo.list_commits().unwrap() {
-            assert!(!commit.get_author().unwrap().is_empty())
+            assert!(!commit.get_author_email().unwrap().is_empty())
         }
     }
 
