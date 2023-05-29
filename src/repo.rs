@@ -55,7 +55,7 @@ impl MeRepo {
 
         let result = match conf.get_entry("user.email") {
             Ok(entry) => {
-                let email= entry.value().unwrap();
+                let email = entry.value().unwrap();
                 Ok(email.to_string())
             }
             Err(err) => Err(err)
@@ -78,7 +78,7 @@ pub fn repo_if_valid_path(path: &str) -> Result<MeRepo, Error> {
 
     let path = Path::new(path);
     if !is_git_repository_dir(path) {
-        return Err(no_repo)
+        return Err(no_repo);
     }
 
     let repository = Repository::open(path)?;

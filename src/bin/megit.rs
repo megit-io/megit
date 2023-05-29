@@ -4,15 +4,21 @@ use megit::repo::repo_if_valid_path;
 
 /// MeGit
 #[derive(Parser, Debug)]
-#[command(author, version, about="MeGit", long_about = None)]
+#[command(author, version, about = "MeGit", long_about = None)]
 struct Args {
     /// Path to the repository to inspect
-    #[arg(short='p', long="path", help="Path to the repository to check, if not set, will use PWD",
-          value_name="REPOSITORY_PATH", default_value=".", required=false)]
+    #[arg(
+        short = 'p',
+        long = "path",
+        help = "Path to the repository to check, if not set, will use PWD",
+        value_name = "REPOSITORY_PATH",
+        default_value = ".",
+        required = false
+    )]
     path: String,
     /// Username to find commits for
-    #[arg(value_name="USERNANME", required=true)]
-    username: String
+    #[arg(value_name = "USERNANME", required = true)]
+    username: String,
 }
 
 // TODO: get username/author name from existing .gitconfig

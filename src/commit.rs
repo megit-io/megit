@@ -3,17 +3,11 @@ use chrono::{DateTime, Local, TimeZone};
 
 
 pub struct MeCommit<'repo> {
-    // sha: String,
-    inner: Commit<'repo>
+    inner: Commit<'repo>,
 }
 
 impl<'repo> MeCommit<'repo> {
-
     pub fn new(commit: Commit) -> MeCommit {
-        // let sha = &commit.id().to_string();
-        // let sha = sha.clone();
-            // sha,
-
         MeCommit {
             inner: commit
         }
@@ -38,6 +32,6 @@ impl<'repo> MeCommit<'repo> {
     }
 
     pub fn tree(&self) -> Result<Tree, Error> {
-        return self.inner.tree()
+        return self.inner.tree();
     }
 }
